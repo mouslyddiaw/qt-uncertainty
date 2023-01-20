@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--method', default='bayes', help="bayes or conformal")
 parser.add_argument('--split_dmmld', default="False", help="")
 
-def bayes_pred_intervals(qts, alpha = 0.1, hpd = False, variance = False):  
+def bayes_pred_interval(qts, alpha = 0.1, hpd = False, variance = False):  
     if hpd: 
         '''Adapted from http://bebi103.caltech.edu.s3-website-us-east-1.amazonaws.com/2015/tutorials/l06_credible_regions.html''' 
         d = np.sort(np.copy(qts)) 
@@ -34,7 +34,7 @@ def bayes_pred_intervals(qts, alpha = 0.1, hpd = False, variance = False):
             sigma = np.sqrt(sigma2)
             return  [np.mean(qts) - z*sigma, np.mean(qts) + z*sigma]
 
-def conformal_pred_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val):   
+def conformal_pred_interval(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val):   
     '''The notebook available at https://github.com/Quilograma/ConformalPredictionTutorial is helpful to get started with conformal prediction'''
     # calculate q_yhat 
     r_hat_cal2 = model_r.predict(X_cal2) 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
                                 qt_ref = sample['qt_ref']
                                 all_preds = [[sample['outputs'][lead][f"qt_{fold+1}"] for fold in range(nfold)] for lead in leads]
                                 qt_preds = utils.aggregate_qt_preds(all_preds, method=agg_method) 
-                                cis = bayes_pred_intervals(qt_preds, alpha=alpha)  
+                                cis = bayes_pred_interval(qt_preds, alpha=alpha)  
                                 lower_bound.append(cis[0])
                                 upper_bound.append(cis[1])
                                 y_true.append(qt_ref) 
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         dic = {'dmmld': {'alpha': [],'cvg': [], 'length' : []}}
         with tqdm(total = len(alphas)) as pbar:
             for alpha in alphas:
-                lower_bound, upper_bound, results =  conformal_pred_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val)
+                lower_bound, upper_bound, results =  conformal_pred_interval(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val)
                 dic['dmmld']['alpha'].append(alpha) 
                 dic['dmmld']['length'].append(results['length'])
                 dic['dmmld']['cvg'].append(results['coverage']) 
