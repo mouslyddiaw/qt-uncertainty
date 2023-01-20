@@ -10,12 +10,12 @@ from pathlib import Path
 from tqdm import tqdm
 import seaborn as sns
 import utils
-from get_pred_intervals import bayes_pred_intervals,  conformal_pred_intervals 
+from get_pred_intervals import bayes_pred_intervals, conformal_pred_intervals 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--result_type', default='0', help="ranges from 1 to 8, generates the different results in the paper") 
 
-def get_cis_conformal(alpha, model_r, df_dmmld, fnames):
+def get_pis_conformal(alpha, model_r, df_dmmld, fnames):
     df_dmmld_cal1 = df_dmmld[df_dmmld.fname.isin(fnames)] 
     df_dmmld_cal2 = df_dmmld[df_dmmld.fname.isin(fnames)] 
     df_dmmld_val = df_dmmld[df_dmmld.fname.isin(fnames)]  
@@ -25,7 +25,7 @@ def get_cis_conformal(alpha, model_r, df_dmmld, fnames):
     lower_conformal, upper_conformal, _ =  conformal_pred_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val)
     return lower_conformal, upper_conformal
 
-def get_cis_bayes(fnames, nfold=5, agg_method='global', alpha=0.1):
+def get_pis_bayes(fnames, nfold=5, agg_method='global', alpha=0.1):
     leads = ['I', 'II', 'III', 'AVR', 'AVL', 'AVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'] 
     lower_bound , upper_bound, mean_qts = [], [], []
     for fname in fnames:
@@ -159,8 +159,8 @@ if __name__ == "__main__":
                 fnames = [get_frst_fname_triplicate(clinical_data, pid, tpt, drug) for tpt in timepoints] 
 
                 alpha = 0.1
-                lower_bayes, upper_bayes, qts_pred = get_cis_bayes(fnames, alpha=alpha) 
-                lower_conformal, upper_conformal = get_cis_conformal(alpha, model_r, df_dmmld, fnames)
+                lower_bayes, upper_bayes, qts_pred = get_pis_bayes(fnames, alpha=alpha) 
+                lower_conformal, upper_conformal = get_pis_conformal(alpha, model_r, df_dmmld, fnames)
         
                 qts = [clinical_data[clinical_data.EGREFID == fname].QT.iloc[0] for fname in fnames] 
                 fontsize = 15

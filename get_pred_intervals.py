@@ -34,7 +34,7 @@ def bayes_pred_intervals(qts, alpha = 0.1, hpd = False, variance = False):
             sigma = np.sqrt(sigma2)
             return  [np.mean(qts) - z*sigma, np.mean(qts) + z*sigma]
 
-def  conformal_pred_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val):   
+def conformal_pred_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val):   
     '''The notebook available at https://github.com/Quilograma/ConformalPredictionTutorial is helpful to get started with conformal prediction'''
     # calculate q_yhat 
     r_hat_cal2 = model_r.predict(X_cal2) 
