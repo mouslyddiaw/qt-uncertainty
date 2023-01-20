@@ -10,7 +10,7 @@ from pathlib import Path
 from tqdm import tqdm
 import seaborn as sns
 import utils
-from get_confidence_intervals import bayes_conf_intervals, conformal_conf_intervals 
+from get_pred_intervals import bayes_pred_intervals,  conformal_pred_intervals 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--result_type', default='0', help="ranges from 1 to 8, generates the different results in the paper") 
@@ -22,7 +22,7 @@ def get_cis_conformal(alpha, model_r, df_dmmld, fnames):
     X_cal1, r_cal1, y_cal1, y_hat_cal1 = utils.separate_features_target(df_dmmld_cal1)
     X_cal2, r_cal2, y_cal2, y_hat_cal2 = utils.separate_features_target(df_dmmld_cal2)
     X_val, r_val, y_val, y_hat_val = utils.separate_features_target(df_dmmld_val) 
-    lower_conformal, upper_conformal, _ = conformal_conf_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val)
+    lower_conformal, upper_conformal, _ =  conformal_pred_intervals(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val)
     return lower_conformal, upper_conformal
 
 def get_cis_bayes(fnames, nfold=5, agg_method='global', alpha=0.1):
@@ -32,7 +32,7 @@ def get_cis_bayes(fnames, nfold=5, agg_method='global', alpha=0.1):
         sample = json.load(open(f'data/json_files/dmmld/{fname}.json', "r"))  
         all_preds = [[sample['outputs'][lead][f"qt_{fold+1}"] for fold in range(nfold)] for lead in leads]
         qt_preds = utils.aggregate_qt_preds(all_preds, method=agg_method) 
-        cis = bayes_conf_intervals(qt_preds, alpha=alpha)  
+        cis = bayes_pred_intervals(qt_preds, alpha=alpha)  
         lower_bound.append(cis[0])
         upper_bound.append(cis[1])
         mean_qts.append(np.mean(qt_preds))
@@ -230,7 +230,7 @@ if __name__ == "__main__":
             all_preds = [[sample['outputs'][lead][f"qt_{fold+1}"] for fold in range(nfold)] for lead in leads]
             qt_preds = utils.aggregate_qt_preds(all_preds, method=agg_method) 
             qt_pred = np.mean(qt_preds)
-            cis = bayes_conf_intervals(qt_preds, alpha=alpha)   
+            cis = bayes_pred_intervals(qt_preds, alpha=alpha)   
 
             k = -0.001
             plt.figure(dpi=400, figsize=(12,1))
@@ -320,7 +320,7 @@ if __name__ == "__main__":
                                     variance, hpd = False, True
                                 else:
                                     variance, hpd = True, False
-                                cis  = bayes_conf_intervals(qt_preds, alpha=alpha, variance = variance, hpd = hpd)   
+                                cis  = bayes_pred_intervals(qt_preds, alpha=alpha, variance = variance, hpd = hpd)   
                                 lower_bound[method].append(cis[0])
                                 upper_bound[method].append(cis[1])  
 
@@ -382,7 +382,7 @@ if __name__ == "__main__":
                                 qt_ref = sample['qt_ref']
                                 all_preds = [[sample['outputs'][lead][f"qt_{fold+1}"] for fold in range(nfold)] for lead in leads]
                                 qt_preds = utils.aggregate_qt_preds(all_preds, method=agg_method)  
-                                cis = bayes_conf_intervals(qt_preds, alpha=alpha, hpd=hpd)  
+                                cis = bayes_pred_intervals(qt_preds, alpha=alpha, hpd=hpd)  
                                 lower_bound.append(cis[0])
                                 upper_bound.append(cis[1])
                                 y_true.append(qt_ref) 
