@@ -108,21 +108,23 @@ if __name__ == "__main__":
         for split_dmmld in [False, True]:
             if not split_dmmld:
                 print('-- full_dmmld')
-                df_rdvq = shuffle(df_rdvq)  
-                X_cal1, r_cal1, y_cal1, y_hat_cal1 = utils.separate_features_target(df_rdvq.iloc[:70*len(df_rdvq)//100,:])
-                X_cal2, r_cal2, y_cal2, y_hat_cal2 = utils.separate_features_target(df_rdvq.iloc[70*len(df_rdvq)//100:,:]) 
+                pids_cal1, pids_cal2 = utils.split_patients(dmmld=False) 
+                df_rdvq_cal1 = df_rdvq[df_rdvq.fname.isin(utils.get_fnames(pids_cal1, dmmld=False))] 
+                df_rdvq_cal2 = df_rdvq[df_rdvq.fname.isin(utils.get_fnames(pids_cal2, dmmld=False))] 
+                X_cal1, r_cal1, y_cal1, y_hat_cal1 = utils.separate_features_target(df_rdvq_cal1)
+                X_cal2, r_cal2, y_cal2, y_hat_cal2 = utils.separate_features_target(df_rdvq_cal2) 
                 X_val, r_val, y_val, y_hat_val = utils.separate_features_target(df_dmmld)  
-                dir = os.path.join('experiments', 'conformal', 'full_dmmld')
+                dir = os.path.join('experiments','conformal', 'full_dmmld')
             else:
                 print('-- split_dmmld')
-                pids_cal1, pids_cal2, pids_val = utils.split_patients(dmmld=True) 
+                pids_cal1, pids_cal2, pids_val = utils.split_patients(dmmld=True)
                 df_dmmld_cal1 = df_dmmld[df_dmmld.fname.isin(utils.get_fnames(pids_cal1))] 
                 df_dmmld_cal2 = df_dmmld[df_dmmld.fname.isin(utils.get_fnames(pids_cal2))] 
                 df_dmmld_val = df_dmmld[df_dmmld.fname.isin(utils.get_fnames(pids_val))]  
                 X_cal1, r_cal1, y_cal1, y_hat_cal1 = utils.separate_features_target(df_dmmld_cal1)
                 X_cal2, r_cal2, y_cal2, y_hat_cal2 = utils.separate_features_target(df_dmmld_cal2)
                 X_val, r_val, y_val, y_hat_val = utils.separate_features_target(df_dmmld_val) 
-                dir = os.path.join('experiments', 'conformal', 'split_dmmld')
+                dir = os.path.join('experiments','conformal', 'split_dmmld')
 
             model_r = utils.load_model(filename = os.path.join(dir, 'model', 'GBReg.sav')) 
 
