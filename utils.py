@@ -12,10 +12,18 @@ def calculate_coverage(lower_bound, upper_bound, y_true, std_length = False):
         if y_true[i]<lower_bound[i] or y_true[i]>upper_bound[i]:
             out_of_bound+=1  
     if not std_length:
-        return {'length': np.mean([up - low for up, low in zip(upper_bound, lower_bound)]), 'coverage': 1-out_of_bound/N}
+        return {'cvg': 1-out_of_bound/N,
+                'length': np.mean([up - low for up, low in zip(upper_bound, lower_bound)]),
+                'deviation': np.mean([deviation(ref, low, up) for ref, up, low in zip(y_true, upper_bound, lower_bound) if ref>up or ref<low]) } 
     else:
         lengths = [up - low for up, low in zip(upper_bound, lower_bound)]
-        return {'length': np.mean(lengths), 'std_length': np.std(lengths), 'coverage': 1-out_of_bound/N}
+        return {'coverage': 1-out_of_bound/N, 'length': np.mean(lengths), 'std_length': np.std(lengths)}
+
+def deviation(ref, low, up):
+    if ref > up:
+        return ref - up
+    else:
+        return low - ref
 
 def compute_quantile_residual(y, y_hat, r_hat, alpha):
     N = len(y)
@@ -27,28 +35,31 @@ def eval_regression(ytrue, ypred):
             'rmse' : round(np.sqrt(mean_squared_error(ytrue, ypred)), 3),
             'mae' : round(mean_absolute_error(ytrue, ypred), 3)}
 
-def separate_features_target(df):
-    X = [list(item) for item in np.array(df.drop(['fname', 'ytrue', 'ypred', 'target'], axis=1))]
-    r, y, y_hat = list(df['target']), list(df['ytrue']), list(df['ypred'])
+def separate_features_target(df, nleads=12, nfold=5):
+    features_to_drop = ['fname', 'ytrue', 'target']
+    pred_cols = [f'ypred_{i+1}' for i in range(nleads*nfold)]
+    features_to_drop.extend(pred_cols)
+    X = [list(item) for item in np.array(df.drop(features_to_drop, axis=1))]
+    r, y, y_hat = list(df['target']), list(df['ytrue']), list(df[pred_cols].mean(axis=1))
     return X, r, y, y_hat
 
 def get_fnames(pids, dmmld=True): 
     if dmmld:
-        clinical_data = pd.read_csv('data/csv_files/SCR-003.Clinical.Data.csv')
+        clinical_data = pd.read_csv('data/SCR-003.Clinical.Data.csv')
     else:
-        clinical_data = pd.read_csv('data/csv_files/SCR-002.Clinical.Data.csv')
+        clinical_data = pd.read_csv('data/SCR-002.Clinical.Data.csv')
     fnames = list(clinical_data[clinical_data.RANDID.isin(pids)].EGREFID)
     return fnames
 
 def split_patients(dmmld=True): 
     if dmmld:
-        clinical_data = pd.read_csv('data/csv_files/SCR-003.Clinical.Data.csv')
+        clinical_data = pd.read_csv('data/SCR-003.Clinical.Data.csv')
         pids = list(set(clinical_data.RANDID))
         random.seed(3)
         random.shuffle(pids)
         return pids[:7], pids[7:14], pids[14:]
     else:
-        clinical_data = pd.read_csv('data/csv_files/SCR-002.Clinical.Data.csv')
+        clinical_data = pd.read_csv('data/SCR-002.Clinical.Data.csv')
         pids = list(set(clinical_data.RANDID))
         random.seed(3)
         random.shuffle(pids)

@@ -1,4 +1,4 @@
-Python (3.8.0) implementation of the UQ-EL, UQ-ELM and LASCP methods. The packages required can be found in `requirements.txt` 
+Python (3.8.0) implementation of the UQ-EL, UQ-ELM (approximate Bayesian inference) and LASCP (conformal prediction) methods. Run `sh commands.sh` to setup a virtual environment and evaluate the 3 methods.
 
-![qt_profile_1](experiments/imgs/uq_illustration.png) 
+![uq_illustration](uq_illustration.png) 
  
