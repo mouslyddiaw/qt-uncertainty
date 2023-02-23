@@ -25,6 +25,18 @@ def deviation(ref, low, up):
     else:
         return low - ref
 
+def binned_err(ytrue, ypred, lower, upper, samples_per_bin = 100):
+    errors = np.array([abs(ref-pred) for ref, pred in zip(ytrue, ypred)])
+    widths = np.array([up-low for up, low in zip(upper, lower)])
+    idxs = np.argsort(errors)
+    errors, widths = errors[idxs], widths[idxs]
+    idxs = list(range(0, len(widths), samples_per_bin)) 
+    errors_bin = [np.mean(errors[prv:nxt]) for prv, nxt in zip(idxs[:-1], idxs[1:])]
+    errors_bin.append(np.mean(errors[idxs[-1]:]))
+    widths_bin = [np.mean(widths[prv:nxt]) for prv, nxt in zip(idxs[:-1], idxs[1:])]
+    widths_bin.append(np.mean(widths[idxs[-1]:]))
+    return errors_bin, widths_bin
+
 def compute_quantile_residual(y, y_hat, r_hat, alpha):
     N = len(y)
     q_yhat = np.quantile(np.abs(np.array(y)-np.array(y_hat))/r_hat,np.ceil((N+1)*(1-alpha))/N)

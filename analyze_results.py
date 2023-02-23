@@ -13,7 +13,7 @@ import utils
 from get_pred_intervals import bayes_pred_interval, conformal_pred_interval 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--result_type', default='0', help="ranges from 1 to 4, generates the different results in the paper")  
+parser.add_argument('--result_type', default='0', help="ranges from 1 to 5, generates the different results in the paper")  
 
 def get_pis_bayes(fnames, nfold=5, nleads=12, agg_method='global', alpha=0.1, study='dmmld'): 
     df = pd.read_csv(f'data/df_{study}.csv')  
@@ -143,17 +143,40 @@ if __name__ == "__main__":
                     ax[compt1][compt2].set_xlabel('Time (h)', fontsize=fontsize)
                 if compt2 == 0:
                     ax[compt1][compt2].set_ylabel('QT (ms)', fontsize=fontsize)   
-            plt.tight_layout()
-            plt.savefig(f'experiments/imgs/qt_profile.png')  
-            
-            
-            
-            
-
-
+        plt.tight_layout()
+        plt.savefig(f'experiments/imgs/qt_profile.png') 
+        print('')
+    elif result_type == 5:
+        print('Error-based calibration plot')
+        alpha, samples_per_bin, study = 0.1, 100 , 'dmmld' 
+        df_rdvq = pd.read_csv('data/df_rdvq.csv') 
+        df = pd.read_csv(f'data/df_{study}.csv')  
+        _, pids_cal2 = utils.split_patients(dmmld=False) 
+        df_rdvq_cal2 = df_rdvq[df_rdvq.fname.isin(utils.get_fnames(pids_cal2, dmmld=False))] 
+        X_cal2, r_cal2, y_cal2, y_hat_cal2 = utils.separate_features_target(df_rdvq_cal2) 
+        X_val, r_val, y_val, y_hat_val = utils.separate_features_target(df)
+        dir = os.path.join('experiments', 'conformal') 
         
+        fnames = list(df.fname) 
+        ytrue = df.ytrue
+        model_r = utils.load_model(filename = os.path.join(dir, 'model', 'GBReg.sav'))
+        lower_conformal, upper_conformal, ypred = conformal_pred_interval(alpha, model_r, X_cal2, r_cal2, y_cal2, y_hat_cal2, X_val, r_val, y_val, y_hat_val)
+        lower_bayes_glob, upper_bayes_glob, ypred = get_pis_bayes(fnames, nfold=5, agg_method='global', alpha=alpha, study=study) 
+        lower_bayes, upper_bayes, ypred = get_pis_bayes(fnames, nfold=5, agg_method='leads', alpha=alpha, study=study) 
 
-                
-    
-        
-          
+        _, widths_bin_bayes_glob = utils.binned_err(ytrue, ypred, lower_bayes_glob, upper_bayes_glob, samples_per_bin=samples_per_bin)
+        _, widths_bin_bayes = utils.binned_err(ytrue, ypred, lower_bayes, upper_bayes, samples_per_bin=samples_per_bin)
+        errors_bin, widths_bin_conformal = utils.binned_err(ytrue, ypred, lower_conformal, upper_conformal, samples_per_bin=samples_per_bin)
+        fontsize = 40
+        plt.figure(figsize = (10, 8), dpi=400) 
+        plt.plot(errors_bin, widths_bin_bayes, '-o', label='UQ-EL', linewidth=4, color='#4895ef')  
+        plt.plot(errors_bin, widths_bin_bayes_glob,'-o', label='UQ-ELM', linewidth=4, color = '#34a0a4')
+        plt.plot(errors_bin, widths_bin_conformal,'-o', label='LASCP', linewidth=4, color='#482e77') 
+        plt.ylabel('MW (ms)', fontsize=fontsize)
+        plt.xlabel('MAE (ms)', fontsize=fontsize)
+        plt.xticks(fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.title(f'S2, α = {alpha}', fontsize=fontsize) 
+        plt.legend(frameon=False, fontsize=fontsize-5, loc='upper left')
+        plt.tight_layout()
+        plt.savefig(f'experiments/imgs/err_vs_pi_width.png')

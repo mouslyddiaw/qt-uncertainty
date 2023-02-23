@@ -111,16 +111,4 @@ if __name__ == '__main__':
                     for key in results.keys():   
                         dic[study][key].append(results[key])
                     pbar.update()
-        utils.save_dict_to_json(dic, os.path.join(dir, 'coverage.json'))  
-        
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
+        utils.save_dict_to_json(dic, os.path.join(dir, 'coverage.json'))   
